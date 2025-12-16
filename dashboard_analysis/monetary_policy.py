@@ -97,7 +97,7 @@ def monetary_policy_tab(df: pd.DataFrame):
     c1, c2, c3, c4, c5 = st.columns(5)
 
     c1.metric(
-        "Date",
+        "As of Date",
         latest.name.strftime("%B %Y")
     )
 
@@ -140,15 +140,17 @@ def monetary_policy_tab(df: pd.DataFrame):
     # ==========================================================
     st.subheader("Inflation Expectations vs Actual Inflation")
 
-    st.line_chart(
-        df[
-            [
-                "Total item",
-                "Expectations of Interest Rates",
-                "Composite Consumer Sentiment Index",
-            ]
-        ]
-    )
+    cols = [
+        "Total item",
+        "Expectations of Interest Rates",
+        "Composite Consumer Sentiment Index",
+    ]
+
+    z_df = df[cols].dropna().copy()
+    z_df = (z_df - z_df.mean()) / z_df.std()
+
+    st.subheader("Standardised Macro Signals (Z-Score)")
+    st.line_chart(z_df)
 
     st.caption(
         "Policy credibility improves when inflation expectations stabilise despite elevated CPI."
