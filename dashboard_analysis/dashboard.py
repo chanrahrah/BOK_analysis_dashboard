@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
+import os
 
 from summary import summary_tab
 from monetary_policy import monetary_policy_tab
@@ -22,7 +23,16 @@ st.caption("Macro transmission–based analysis")
 # ----------------------------------
 @st.cache_data
 def load_data():
-    df = pd.read_csv(r'data\cleaned_full_data.csv' parse_dates=["date"])
+    relative_path = os.path.join(os.pardir, 'data', 'cleaned_full_data.csv')
+    file_path = os.path.abspath(relative_path)
+    if not os.path.exists(file_path):
+        st.error(f"Error: Dataset not found at path: {file_path}")
+        st.stop() # Stops the script execution gracefully
+    df = pd.read_csv(
+        file_path,
+        parse_dates=["date"],  
+        index_col="date"      
+    )
     df = df.set_index("date").sort_index()
     return df
 
