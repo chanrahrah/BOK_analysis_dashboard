@@ -23,7 +23,7 @@ st.caption("Macro transmission–based analysis")
 # ----------------------------------
 @st.cache_data
 def load_data():
-    file_path = '../data/cleaned_full_data.csv'
+    file_path = os.path.join('data', 'cleaned_full_data.csv')
     if not os.path.exists(file_path):
         st.error(f"Error: Dataset not found at path: {file_path}")
         st.stop() # Stops the script execution gracefully
