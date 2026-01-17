@@ -3,10 +3,15 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import os
+import sys
 
-from summary import summary_tab
-from monetary_policy import monetary_policy_tab
-from fiscal_n_debt import render_debt_stability_tab
+from data_pipeline.data_cleaning import DATA
+
+from dashboard_analysis.summary import summary_tab
+from dashboard_analysis.monetary_policy import monetary_policy_tab
+from dashboard_analysis.fiscal_n_debt import fiscal_and_debt_tab
+from dashboard_analysis.market_performance import market_performance_tab
+from dashboard_analysis.nps_analysis import nps_analysis_tab
 # ----------------------------------
 # Page configuration
 # ----------------------------------
@@ -23,48 +28,43 @@ st.caption("Macro transmission–based analysis")
 # ----------------------------------
 @st.cache_data
 def load_data():
-    file_path = os.path.join('data', 'cleaned_full_data.csv') # Uncomment for streamlit cloud deployment
-    # file_path = "../data/cleaned_full_data.csv"  # Uncomment for Local relative path for development
-    if not os.path.exists(file_path):
-        st.error(f"Error: Dataset not found at path: {file_path}")
-        st.stop() # Stops the script execution gracefully
-    df = pd.read_csv(
-        file_path,
-        parse_dates=["date"]    
-    )
-    df = df.set_index("date").sort_index()
-    return df
+    return DATA
 
-df = load_data()
+DATA = load_data()
 
 # ----------------------------------
 # Tabs (Macro Transmission Channels)
 # ----------------------------------
 tabs = st.tabs([
-    "Summary",
     "🟦 Monetary & Inflation",
     "🟩 Fiscal & Debt",
-    "🟨 Growth Cycle",
-    "🟥 Asset Markets",
-    "🟪 External Sector"
+    "🟧 NPS Analysis",
+    "🟨 Market Performance",
+    
 ])
-
+ 
 # ==================================
-# Tab 0: Summary
+# Tab 1: Monetary & Inflation
 # ==================================
 with tabs[0]:
-    summary_tab(df)
-    
-# ==================================
-# 🟦 Tab 1: Monetary & Inflation
-# ==================================
-with tabs[1]:
-    monetary_policy_tab(df)
+    monetary_policy_tab(DATA)
 
 # ==================================
-# 🟩 Tab 2: Fiscal & Government Debt
+# Tab 2: Fiscal & Government Debt
+# ==================================
+with tabs[1]:
+    fiscal_and_debt_tab(DATA)   
+
+# ==================================
+# Tab 3: NPS Analysis
 # ==================================
 with tabs[2]:
-    render_debt_stability_tab(df)   
+    nps_analysis_tab(DATA)
+
+# ==================================
+# Tab 4: Market Performance 
+# ==================================
+with tabs[3]:
+    market_performance_tab(DATA)
 
 

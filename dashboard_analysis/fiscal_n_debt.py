@@ -1,178 +1,274 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import sys
 
-def render_debt_stability_tab(cleaned_full_data):
-    st.header("Debt & Financial Stability")
+def fiscal_and_debt_tab(DATA):
 
-    df = build_debt_stability_df(cleaned_full_data)
+    st.title("🏛️ Fiscal Policy & Debt Sustainability")
 
-    # =========================
-    # SECTION 1: LEVELS
-    # =========================
-    st.subheader("Leverage Levels")
+    # ==========================================================
+    # SECTION 1: LOAD DATA
+    # ==========================================================
+    df_fisc = DATA["monthly"]["fiscal_balance"].copy()
+    df_house = DATA["monthly"]["cts"].copy()
+    df_debt_gdp_monthly = DATA["monthly"]["debt_gdp"].copy()
+
+    df_nps_pct = DATA["yearly"]["nps_percent"].copy()
+    df_nps_aum = DATA["yearly"]["nps_aum"].copy()
+    df_debt_gdp_year = DATA["yearly"]["debt_gdp"].copy()
+
+    df_debt_house = DATA["quarterly"]["debt_house"].copy()
+    df_debt = DATA["quarterly"]["debt"].copy()
+
+    df_fisc = df_fisc.sort_index()
+    df_house = df_house.sort_index()
+    df_debt_gdp_monthly = df_debt_gdp_monthly.sort_index()
+    df_debt_gdp_year = df_debt_gdp_year.sort_index()
+    df_debt_house = df_debt_house.sort_index()
+    df_nps_pct = df_nps_pct.sort_index()
+    df_nps_aum = df_nps_aum.sort_index()
+
+    # ==========================================================
+    # SECTION 2: FEATURE ENGINEERING — FISCAL STANCE
+    # ==========================================================
+    df_fisc["fiscal_impulse"] = (
+        df_fisc["Current Expenditure"].diff(12)
+        + df_fisc["Capital Expenditure"].diff(12)
+        - df_fisc["Total Revenues"].diff(12)
+    )
+
+    df_fisc["primary_balance"] = (
+        df_fisc["Balance"] + df_fisc["Interest Payments"]
+    )
+
+    df_fisc["interest_burden"] = (
+        df_fisc["Interest Payments"] / df_fisc["Total Revenues"]
+    )
+
+    # ==========================================================
+    # SECTION 3: FISCAL STANCE
+    # ==========================================================
+    st.subheader("Fiscal Stance: Balance vs Impulse")
+
+    st.info(
+        "Negative Fiscal Balance indicates a Deficit, Positive Fiscal Balance indicates a Surplus." \
+        "Increasing / Positive Fiscal Impulse indicates Expansionary Stance, Decreasing / NegativeFiscal Impulse indicates Contractionary Stance."
+    )
+
+    plot_df = df_fisc.rename(columns={
+        "Balance": "Fiscal Balance",
+        "fiscal_impulse": "Fiscal Impulse"})
+    fig = px.line(
+        plot_df[["Fiscal Balance", "Fiscal Impulse"]],
+        title="Fiscal Balance & Fiscal Impulse (YoY)",
+        labels={"value": "KRW Trillion", "index": "Date"}
+    )
+    
+    fig.add_hline(
+            y=0,
+            line_dash="dash",
+            line_color="red",
+        )
+    
+    fig.add_vrect(
+        x0="2020-01-01", 
+        x1="2022-03-01", 
+        fillcolor="gray", 
+        opacity=0.1, 
+        layer="below", 
+        annotation_text="COVID-19 Pandemic", 
+        annotation_position="top left"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    
+    latest = df_fisc.iloc[-1]
+
+    stance = (
+        "Expansionary" if latest["fiscal_impulse"] > 0
+        else "Contractionary"
+    )
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Fiscal Balance (KRW Trillion)", f"{latest['Balance']:+,.0f}",
+              delta=f"{latest['Balance']:+,.0f}")
+    c2.metric("Fiscal Impulse (YoY) (KRW Trillion)", f"{latest['fiscal_impulse']:+,.0f}",
+              delta=f"{latest['fiscal_impulse']:+,.0f}")
+    c3.metric("Fiscal Stance", stance)
+
+    st.caption(
+        """
+        Fiscal policy has shifted through clear regimes: neutral fine-tuning pre-2020,
+        emergency stimulus during COVID, a short-lived consolidation attempt in 2022,
+        followed by stop-go re-expansion from 2023 onward.    
+
+        The latest reading shows Korea is running a persistent fiscal deficit while re-accelerating fiscal support at the margin.
+        This reflects a stabilization-oriented but reactive fiscal framework, relying on domestic balance-sheet capacity rather than consolidation.
+        The stance supports near-term growth but raises medium-term debt sustainability concerns.
+        """
+    )
+
+    st.divider()
+
+    # ==========================================================
+    # SECTION 2: DEBT SUSTAINABILITY
+    # ==========================================================
+    st.subheader("Korea Debt Sustainability")
+
+    # Debt
+    fig = px.line(
+        df_debt,
+        title="Net Borrowing / Lending by Sector (Trillion Won) — Quarterly",
+        labels={"value": "Trillion Won", "date": "Date"},
+        color_discrete_map={
+            "Rest of the world": "lightblue"
+        }
+    )
+
+    fig.update_traces(
+        line=dict(dash="dot"),
+        selector=dict(name="Rest of the world"),
+        showlegend=False
+    )
+
+    last_date = df_debt.index[-1]
+    last_value = df_debt["Rest of the world"].iloc[-1]
+
+    fig.add_annotation(
+        x=last_date,
+        y=last_value,
+        text="Rest of the world",
+        showarrow=False,
+        xanchor="left",
+        xshift=10,        # Slightly offset text to the right so it doesn't touch the line
+        font=dict(color="lightblue")
+    )
+
+    fig.add_hline(
+        y=0,
+        line_dash="dash",
+        line_color="grey",
+        annotation_text="Net borrowing (+) vs Net lending (–)"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.caption(
+        """Negative values for the Rest of the World reflect Korea’s net lending position vs foreign economies. 
+        As domestic sectors—particularly households and government—absorb financing, excess savings are channeled abroad, 
+        resulting in persistent net capital outflows and a structurally negative RoW balance.”"""
+    )
+
+    # Debt-to-GDP (yearly)
+    df_debt_gdp_year["debt_to_gdp"] = (
+        df_debt_gdp_year["Gross External Debt"]
+        / df_debt_gdp_year["GDP"]
+    ) * 100
+
+    covid_start_val_debt_gdp_y = df_debt_gdp_year.loc["2020-01-01", "debt_to_gdp"]
 
     col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown("**Household Debt (Monthly)**")
-        st.line_chart(df["household_debt"])
-
-        latest_hh = df["household_debt"].iloc[-1]
-        hh_yoy = df["hh_debt_yoy"].iloc[-1]
-
-        st.metric(
-            label="Latest Household Debt",
-            value=f"{latest_hh:,.0f}",
-            delta=f"{hh_yoy:.2f}% YoY"
+    with col1: 
+        fig = px.line(
+            df_debt_gdp_year["debt_to_gdp"],
+            title="Debt(External) -to-GDP Ratio (%) — Yearly",
+            labels={"value": "Percent", "date": "Date"},
+            color_discrete_sequence=["pink"] 
+        )
+        fig.add_vrect(
+            x0="2020-01-01", 
+            x1="2022-03-01", 
+            fillcolor="gray", 
+            opacity=0.1, 
+            layer="below", 
+            annotation_text="COVID-19 Pandemic", 
+            annotation_position="top left"
         )
 
-    with col2:
-        st.markdown("**Corporate Debt**")
-        st.line_chart(df["corporate_debt"])
-
-        latest_corp = df["corporate_debt"].iloc[-1]
-        corp_yoy = df["corp_debt_yoy"].iloc[-1]
-
-        st.metric(
-            label="Latest Corporate Debt",
-            value=f"{latest_corp:,.0f}",
-            delta=f"{corp_yoy:.2f}% YoY"
+        fig.add_hline(
+            y=covid_start_val_debt_gdp_y, 
+            line_dash="dash", 
+            line_color="red", 
+            annotation_text=f"Pre-COVID Level ({covid_start_val_debt_gdp_y:.1f}%)",
+            annotation_position="bottom right"
         )
 
-    # =========================
-    # SECTION 2: DEBT TO GDP
-    # =========================
-    if "hh_debt_to_gdp" in df.columns:
-        st.subheader("Debt Sustainability")
+        st.plotly_chart(fig, use_container_width=True)
 
-        st.line_chart(
-            df[["hh_debt_to_gdp", "corp_debt_to_gdp"]]
+    with col2: 
+        # Create figure with secondary y-axis
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
+        
+        # 1. Add the Household Debt/Income Ratio (Primary Y-axis)
+        fig.add_trace(
+            go.Scatter(
+                x=df_debt_house.index, 
+                y=df_debt_house["Household and NPISHs Credit to GDP ratio(Core debt)"], 
+                name="Debt-to-GDP Ratio (%)",
+                line_color='blue'
+            ),
+            secondary_y=False,
+        )
+        
+        # 2. Add the Household Debt (Trillion Won) (Secondary Y-axis)
+        fig.add_trace(
+            go.Scatter(
+                x=df_debt_house.index, 
+                y=df_debt_house["Households and NPISHs"], 
+                name="Household Debt (Trn KRW)",
+                line_color='orange',
+                 line=dict(width=1.5, dash="dot"),
+            ),
+            secondary_y=True,
+        )
+        
+        # Add figure title and adjust layout
+        fig.update_layout(
+            title_text="Dual Axis: Household Debt / Income (%) vs. Total Household Debt (Trillion Won) (Quarterly)",
+            margin=dict(t=100, l=40, r=40, b=30), 
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
 
-        st.caption("Debt-to-GDP ratios measure whether leverage is supported by income.")
-
-    # =========================
-    # SECTION 3: MOMENTUM & STRESS
-    # =========================
-    st.subheader("Momentum & Financial Stress")
-
-    col3, col4 = st.columns(2)
-
-    with col3:
-        st.markdown("**Debt Growth vs Income Growth**")
-        st.line_chart(
-            df[["hh_debt_yoy", "gdp_yoy"]]
+        fig.add_vrect(
+            x0="2020-01-01", 
+            x1="2022-03-01", 
+            fillcolor="gray", 
+            opacity=0.1, 
+            layer="below", 
+            annotation_text="COVID-19 Pandemic", 
+            annotation_position="top left"
         )
+        
+        # Set y-axes titles
+        fig.update_yaxes(title_text="Debt-to-GDP Ratio (%)", secondary_y=False)
+        fig.update_yaxes(title_text="Total Household Debt (Trn KRW)", secondary_y=True)
+        
+        st.plotly_chart(fig, use_container_width=True)
 
-        spread = df["hh_debt_vs_income"].iloc[-1]
-        st.metric(
-            label="Debt – Income Growth Spread",
-            value=f"{spread:.2f} pp"
-        )
+    st.info(
+        """
+        **Debt-to-GDP** measures long-term solvency, the ability to meet its long-term financial obligations.
+        A rising ratio indicates increasing leverage and potential vulnerability to shocks.
+        """
+    )
+    st.caption(
+        """
+    External debt-to-GDP rose sharply during COVID-19 as emergency fiscal support, global liquidity easing,
+    and weaker nominal GDP increased reliance on external financing. Since 2022, the ratio has gradually
+    declined, reflecting post-pandemic normalization, tighter financial conditions, and improved growth,
+    though leverage remains above pre-COVID levels.
 
-    with col4:
-        st.markdown("**Household Debt Acceleration**")
-        st.line_chart(df["hh_debt_accel"])
-        st.caption("Positive acceleration = leverage risk building")
-
-    # =========================
-    # SECTION 4: POLICY INTERPRETATION
-    # =========================
-    st.subheader("Policy Interpretation")
-
-    interpretation = generate_debt_policy_signal(df)
-
-    st.info(interpretation)
-
-def build_debt_stability_df(df):
-    """
-    Build debt & financial stability indicators from cleaned_full_data
-    """
-
-    df = df.copy()
-    df.index = pd.to_datetime(df.index)
-
-    col_map = {
-        "household_debt": "Present Debt of Household",
-        "corporate_debt": "Financial Corporations -   Domestic Currency",
-        "gdp": "Gross domestic product at market prices(GDP)"
-    }
-
-    df_debt = pd.DataFrame(index=df.index)
-    for key, col in col_map.items():
-        if col in df.columns:
-            df_debt[key] = df[col]
-
-    # --- Growth rates (YoY) ---
-    df_debt["hh_debt_yoy"] = df_debt["household_debt"].pct_change(12) * 100
-    df_debt["corp_debt_yoy"] = df_debt["corporate_debt"].pct_change(12) * 100
-
-    if "gdp" in df_debt.columns:
-        df_debt["gdp_yoy"] = df_debt["gdp"].pct_change(12) * 100
-
-        # Debt-to-GDP
-        df_debt["hh_debt_to_gdp"] = df_debt["household_debt"] / df_debt["gdp"]
-        df_debt["corp_debt_to_gdp"] = df_debt["corporate_debt"] / df_debt["gdp"]
-
-        # Debt vs income pressure
-        df_debt["hh_debt_vs_income"] = (
-            df_debt["hh_debt_yoy"] - df_debt["gdp_yoy"]
-        )
-
-    # --- Acceleration (momentum change) ---
-    df_debt["hh_debt_accel"] = (
-        df_debt["hh_debt_yoy"] - df_debt["hh_debt_yoy"].shift(3)
+    Household debt-to-income surged during the pandemic amid ultra-low interest rates and strong credit
+    growth, particularly in housing. In the post-COVID period, monetary tightening and macroprudential
+    measures have started to reduce household leverage, but elevated debt levels continue to pose
+    downside risks to consumption during economic slowdowns.
+        """
     )
 
-    df_debt["corp_debt_accel"] = (
-        df_debt["corp_debt_yoy"] - df_debt["corp_debt_yoy"].shift(3)
-    )
+    st.divider()
 
-    return df_debt
-
-def generate_debt_policy_signal(df):
-    """
-    Generate a macro-style interpretation based on debt indicators
-    """
-
-    hh_level = df["household_debt"].iloc[-1]
-    hh_yoy = df["hh_debt_yoy"].iloc[-1]
-    accel = df["hh_debt_accel"].iloc[-1]
-    spread = df.get("hh_debt_vs_income", pd.Series([0])).iloc[-1]
-
-    messages = []
-
-    # Debt vs income
-    if spread > 0:
-        messages.append(
-            "Household debt is rising faster than income, increasing balance-sheet stress."
-        )
-    else:
-        messages.append(
-            "Household debt growth remains broadly in line with income."
-        )
-
-    # Acceleration
-    if accel > 0:
-        messages.append(
-            "Debt momentum is accelerating, suggesting rising financial vulnerability."
-        )
-    else:
-        messages.append(
-            "Debt momentum is slowing, reducing near-term financial stability risks."
-        )
-
-    # Policy constraint
-    if spread > 0 and accel > 0:
-        messages.append(
-            "This constrains the Bank of Korea’s ability to cut rates aggressively, "
-            "even if growth slows."
-        )
-    else:
-        messages.append(
-            "Debt dynamics allow the Bank of Korea greater flexibility in adjusting policy."
-        )
-
-    return " ".join(messages)
 
