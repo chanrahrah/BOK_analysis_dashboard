@@ -1,20 +1,26 @@
 import pandas as pd
 import numpy as np
 
-df_bok = pd.read_csv(r'C:\Users\User\Documents\NUS\Projects\NUSSIF\data\BOK Base rate MoM.csv')
-df_cpi = pd.read_csv(r'C:\Users\User\Documents\NUS\Projects\NUSSIF\data\Consumer Price indices MoM.csv')
-df_cts = pd.read_csv(r'C:\Users\User\Documents\NUS\Projects\NUSSIF\data\Consumer Tendency Survey MoM.csv')
-df_fx = pd.read_csv(r'C:\Users\User\Documents\NUS\Projects\NUSSIF\data\Exchange Rate of Won against USD, China, Japan Daily.csv')
-df_npish = pd.read_csv(r'C:\Users\User\Documents\NUS\Projects\NUSSIF\data\Final Consumption Expenditure of NPISH by Purpose QoQ.csv')
-df_fiscal_balance = pd.read_csv(r'C:\Users\User\Documents\NUS\Projects\NUSSIF\data\Central Governmnet Fiscal Balance MoM.csv')
-df_house = pd.read_csv(r'C:\Users\User\Documents\NUS\Projects\NUSSIF\data\House Price Index(KB) MoM.csv')
-df_nps = pd.read_csv(r'C:\Users\User\Documents\NUS\Projects\NUSSIF\data\nps_asset_allocation YoY.csv')
-df_ktb = pd.read_csv(r'C:\Users\User\Documents\NUS\Projects\NUSSIF\data\Trade of KTB Bond MoM.csv')
-df_kospi = pd.read_csv(r'C:\Users\User\Documents\NUS\Projects\NUSSIF\data\Transactions in KOSPI KOSDAQ Index MoM.csv')
-df_debt_gdp = pd.read_csv(r'C:\Users\User\Documents\NUS\Projects\NUSSIF\data\GDP n Debt YoY.csv')
-df_debt_house = pd.read_csv(r"C:\Users\User\Documents\NUS\Projects\NUSSIF\data\House Debt Ratio QoQ.csv")
-df_nps_market = pd.read_csv(r"C:\Users\User\Documents\NUS\Projects\NUSSIF\data\nps market perfomance index MoM.csv")
-df_debt = pd.read_csv(r"C:\Users\User\Documents\NUS\Projects\NUSSIF\data\Debt QoQ.csv")
+from pathlib import Path
+import pandas as pd
+
+BASE_DIR = Path(__file__).resolve().parent.parent   # 👈 go up one level
+DATA_DIR = BASE_DIR / "data"
+
+df_bok = pd.read_csv(DATA_DIR / "BOK Base rate MoM.csv")
+df_cpi = pd.read_csv(DATA_DIR / "Consumer Price indices MoM.csv")
+df_cts = pd.read_csv(DATA_DIR / "Consumer Tendency Survey MoM.csv")
+df_fx = pd.read_csv(DATA_DIR / "Exchange Rate of Won against USD, China, Japan Daily.csv")
+df_npish = pd.read_csv(DATA_DIR / "Final Consumption Expenditure of NPISH by Purpose QoQ.csv")
+df_fiscal_balance = pd.read_csv(DATA_DIR / "Central Governmnet Fiscal Balance MoM.csv")
+df_house = pd.read_csv(DATA_DIR / "House Price Index(KB) MoM.csv")
+df_nps = pd.read_csv(DATA_DIR / "nps_asset_allocation YoY.csv")
+df_ktb = pd.read_csv(DATA_DIR / "Trade of KTB Bond MoM.csv")
+df_kospi = pd.read_csv(DATA_DIR / "Transactions in KOSPI KOSDAQ Index MoM.csv")
+df_debt_gdp = pd.read_csv(DATA_DIR / "GDP n Debt YoY.csv")
+df_debt_house = pd.read_csv(DATA_DIR / "House Debt Ratio QoQ.csv")
+df_nps_market = pd.read_csv(DATA_DIR / "nps market perfomance index MoM.csv")
+df_debt = pd.read_csv(DATA_DIR / "Debt QoQ.csv")
 
 # clean nps data to correct format
 df_nps["date"] = pd.to_datetime(df_nps["date"].astype(str), format="%Y")
