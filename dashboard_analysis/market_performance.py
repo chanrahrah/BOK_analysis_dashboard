@@ -153,9 +153,7 @@ def market_performance_tab(DATA):
     # Policy direction for regime shading
     df_plot["rate_change"] = df_plot["base_rate"].diff()
 
-    # --------------------------
     # Base chart: KOSPI (left)
-    # --------------------------
     fig = px.line(
         df_plot,
         x=date_col,
@@ -164,9 +162,7 @@ def market_performance_tab(DATA):
         labels={"KOSPI_Index(End Of)": "KOSPI Index"}
     )
 
-    # --------------------------
     # Policy rate (right axis)
-    # --------------------------
     fig.add_scatter(
         x=df_plot[date_col],
         y=df_plot["base_rate"],
@@ -175,9 +171,6 @@ def market_performance_tab(DATA):
         mode="lines+markers"
     )
 
-    # --------------------------
-    # Layout (dual + offset axis)
-    # --------------------------
     fig.update_layout(        
         yaxis=dict(title="KOSPI Index"),
         yaxis2=dict(
@@ -195,9 +188,7 @@ def market_performance_tab(DATA):
         selector=dict(type="scatter")
     )
 
-    # --------------------------
     # Shade tightening regimes
-    # --------------------------
     tightening = df_plot[df_plot["rate_change"] > 0]
 
     for i in range(len(tightening) - 1):

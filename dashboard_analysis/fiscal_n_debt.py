@@ -115,7 +115,7 @@ def fiscal_and_debt_tab(DATA):
     st.divider()
 
     # ==========================================================
-    # SECTION 2: DEBT SUSTAINABILITY
+    # SECTION 4: DEBT SUSTAINABILITY
     # ==========================================================
     st.subheader("Korea Debt Sustainability")
 
@@ -144,7 +144,7 @@ def fiscal_and_debt_tab(DATA):
         text="Rest of the world",
         showarrow=False,
         xanchor="left",
-        xshift=10,        # Slightly offset text to the right so it doesn't touch the line
+        xshift=10,        
         font=dict(color="lightblue")
     )
 
@@ -203,7 +203,7 @@ def fiscal_and_debt_tab(DATA):
         # Create figure with secondary y-axis
         fig = make_subplots(specs=[[{"secondary_y": True}]])
         
-        # 1. Add the Household Debt/Income Ratio (Primary Y-axis)
+        # Household Debt/Income Ratio (Primary Y-axis)
         fig.add_trace(
             go.Scatter(
                 x=df_debt_house.index, 
@@ -214,7 +214,7 @@ def fiscal_and_debt_tab(DATA):
             secondary_y=False,
         )
         
-        # 2. Add the Household Debt (Trillion Won) (Secondary Y-axis)
+        # Household Debt (Trillion Won) (Secondary Y-axis)
         fig.add_trace(
             go.Scatter(
                 x=df_debt_house.index, 

@@ -16,6 +16,7 @@ def nps_analysis_tab(DATA):
     df_nps_aum = DATA["yearly"]["nps_aum"].copy()
     df_nps_pct = df_nps_pct.sort_index()
     df_nps_aum = df_nps_aum.sort_index()
+
     # ---- Allocation ratios
     df_nps_pct["domestic_ratio"] = (
         df_nps_pct["domestic_equity"]
@@ -52,7 +53,7 @@ def nps_analysis_tab(DATA):
     st.subheader("NPS Allocation vs Market Performance")
 
     # ==========================================================
-    # LOAD & PREP DATA
+    # SECTION 2: LOAD & PREP DATA
     # ==========================================================
     df_market = DATA["monthly"]["nps_market"].copy()
 
@@ -74,9 +75,6 @@ def nps_analysis_tab(DATA):
         ["domestic_equity", "domestic_fixed_income"]
     ]
 
-    # ==========================================================
-    # ALIGN DATA
-    # ==========================================================
     df_plot = (
         df_market[
             [
@@ -90,7 +88,7 @@ def nps_analysis_tab(DATA):
     )
 
     # ==========================================================
-    # A. EQUITY MARKET — REBALANCING (LAGGED RESPONSE)
+    # SECTION 3: EQUITY MARKET — REBALANCING (LAGGED RESPONSE)
     # ==========================================================
     fig_eq = go.Figure()
 
@@ -146,7 +144,7 @@ def nps_analysis_tab(DATA):
     )
 
     # ==========================================================
-    # B. BOND MARKET — PRICE / YIELD CHANNEL
+    # Section 4: BOND MARKET — PRICE / YIELD CHANNEL
     # ==========================================================
     fig_bond_price = go.Figure()
 
@@ -201,7 +199,7 @@ def nps_analysis_tab(DATA):
     )
 
     # ==========================================================
-    # C. BOND MARKET — STRESS / LIQUIDITY CHANNEL
+    # Section 5: BOND MARKET — STRESS / LIQUIDITY CHANNEL
     # ==========================================================
     fig_bond_stress = go.Figure()
 

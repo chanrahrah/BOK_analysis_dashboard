@@ -4,7 +4,7 @@ import numpy as np
 from pathlib import Path
 import pandas as pd
 
-BASE_DIR = Path(__file__).resolve().parent.parent   # 👈 go up one level
+BASE_DIR = Path(__file__).resolve().parent.parent 
 DATA_DIR = BASE_DIR / "data"
 
 df_bok = pd.read_csv(DATA_DIR / "BOK Base rate MoM.csv")

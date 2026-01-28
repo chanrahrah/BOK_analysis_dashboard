@@ -113,7 +113,7 @@ def monetary_policy_tab(DATA):
     )
 
     # ==========================================================
-    # SECTION 4: REAL POLICY RATE (Effective Monetary Policy)
+    # SECTION 4: REAL POLICY RATE (How effective is Monetary Policy)
     # ==========================================================
     fig = px.line(
         df,
@@ -191,7 +191,7 @@ def monetary_policy_tab(DATA):
 
     st.divider()
     # ==========================================================
-    # SECTION 7: EXPECTATIONS & CREDIBILITY
+    # SECTION 5: EXPECTATIONS & CREDIBILITY
     # ==========================================================
     st.subheader("Inflation Expectations & Credibility")
 
